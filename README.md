@@ -6,10 +6,14 @@ Enabling stuctures with defaults values using [struct tags](http://golang.org/pk
 Installation
 ------------
 
-The recommended way to install go-defaults
+This is a fork repo. See base repository, refer to:
+
+github.com/mcuadros/go-defaults
+
+The recommended way to install this go-defaults
 
 ```
-go get github.com/mcuadros/go-defaults
+go get github.com/zhlingbo/go-defaults
 ```
 
 Examples
