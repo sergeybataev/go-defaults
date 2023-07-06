@@ -104,6 +104,49 @@ fmt.Println(*example.Oed) //Prints: 64 (64, because the ptr addr is nil when Set
 
 ```
 
+It's also a very useful feature for web application which default values are needed while binding request json.
+
+For example:
+```go
+type ExamplePostBody struct {
+    Foo *bool   `json:"foo" default:"true"` //<-- StructTag with a default key
+    Bar *string `json:"bar" default:"example"`
+    Qux *int    `json:"qux" default:"22"`
+    Oed *int64  `json:"oed" default:"64"`
+}
+```
+
+HTTP request seems like this:
+```bash
+curl --location --request POST ... \
+... \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "foo": false,
+    "bar": "",
+    "qux": 0
+}'
+```
+
+Request handler:
+```go
+func PostExampleHandler(c *gin.Context) {
+    var reqBody ExamplePostBody
+    if err := c.ShouldBindJSON(&reqBody); err != nil {
+        c.JSON(http.StatusBadRequest, nil)
+        return
+    }
+    defaults.SetDefaults(&reqBody)
+
+    fmt.Println(*reqBody.Foo) //Prints: false (zero value `false` for bool but not for bool ptr)
+    fmt.Println(*reqBody.Bar) //Prints: "" (print "" which set in advance, not "example" for default)
+    fmt.Println(*reqBody.Qux) //Prints: 0 (0 instead of 22, did not confused from whether zero value is in json or not)
+    fmt.Println(*reqBody.Oed) //Prints: 64 (In this case "oed" is not in req json, so set default 64)
+
+    ...
+}
+```
+
 License
 -------
 
