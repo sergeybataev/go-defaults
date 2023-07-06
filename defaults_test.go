@@ -32,6 +32,11 @@ type Child struct {
 	Age  int `default:"10"`
 }
 
+type ChildPtr struct {
+	Name *string
+	Age  *int `default:"10"`
+}
+
 type ExampleBasic struct {
 	Bool       bool    `default:"true"`
 	Integer    int     `default:"33"`
@@ -77,6 +82,11 @@ type ExampleBasic struct {
 	Float64Ptr  *float64       `default:"6.4"`
 	DurationPtr *time.Duration `default:"1s"`
 	SecondPtr   *time.Duration `default:"1s"`
+	StructPtr   *struct {
+		Bool    bool `default:"true"`
+		Integer *int `default:"33"`
+	}
+	ChildrenPtr []*ChildPtr
 }
 
 func (s *DefaultsSuite) TestSetDefaultsBasic(c *C) {
@@ -137,6 +147,9 @@ func (s *DefaultsSuite) assertTypes(c *C, foo *ExampleBasic) {
 	c.Assert(*foo.Float64Ptr, Equals, 6.4)
 	c.Assert(*foo.DurationPtr, Equals, time.Second)
 	c.Assert(*foo.SecondPtr, Equals, time.Second)
+	c.Assert(foo.StructPtr.Bool, Equals, true)
+	c.Assert(*foo.StructPtr.Integer, Equals, 33)
+	c.Assert(foo.ChildrenPtr, IsNil)
 }
 
 func (s *DefaultsSuite) TestSetDefaultsWithValues(c *C) {
@@ -152,6 +165,10 @@ func (s *DefaultsSuite) TestSetDefaultsWithValues(c *C) {
 	intzero := 0
 	foo.IntPtr = &intzero
 
+	ageZero := 0
+	childPtr := &ChildPtr{Age: &ageZero}
+	foo.ChildrenPtr = append(foo.ChildrenPtr, childPtr)
+
 	SetDefaults(foo)
 
 	c.Assert(foo.Integer, Equals, 55)
@@ -161,6 +178,8 @@ func (s *DefaultsSuite) TestSetDefaultsWithValues(c *C) {
 	c.Assert(string(foo.Bytes), Equals, "foo")
 	c.Assert(foo.Children[0].Age, Equals, 10)
 	c.Assert(foo.Children[1].Age, Equals, 2)
+	c.Assert(*foo.ChildrenPtr[0].Age, Equals, 0)
+	c.Assert(foo.ChildrenPtr[0].Name, IsNil)
 
 	c.Assert(*foo.IntPtr, Equals, 0)
 }

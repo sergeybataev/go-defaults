@@ -112,6 +112,16 @@ func newDefaultFiller() *Filler {
 				fields := getDefaultFiller().GetFieldsFromValue(field.Value.Index(i), nil)
 				getDefaultFiller().SetDefaultValues(fields)
 			}
+		case reflect.Ptr:
+			count := field.Value.Len()
+			for i := 0; i < count; i++ {
+				if field.Value.Index(i).IsZero() {
+					newValue := reflect.New(field.Value.Index(i).Type().Elem())
+					field.Value.Index(i).Set(newValue)
+				}
+				fields := getDefaultFiller().GetFieldsFromValue(field.Value.Index(i).Elem(), nil)
+				getDefaultFiller().SetDefaultValues(fields)
+			}
 		default:
 			//处理形如 [1,2,3,4]
 			reg := regexp.MustCompile(`^\[(.*)\]$`)
@@ -140,10 +150,23 @@ func newDefaultFiller() *Filler {
 	}
 
 	funcs[reflect.Ptr] = func(field *FieldData) {
+
+		k := field.Value.Type().Elem().Kind()
+
+		if k == reflect.Struct {
+			if field.Value.IsZero() {
+				newValue := reflect.New(field.Value.Type().Elem())
+				field.Value.Set(newValue)
+			}
+			fields := getDefaultFiller().GetFieldsFromValue(field.Value.Elem(), nil)
+			getDefaultFiller().SetDefaultValues(fields)
+		}
+
 		if field.TagValue == "" {
 			return
 		}
-		switch field.Value.Type().Elem().Kind() {
+
+		switch k {
 		case reflect.Bool:
 			value, _ := strconv.ParseBool(field.TagValue)
 			field.Value.Set(reflect.ValueOf(&value))
@@ -228,13 +251,11 @@ func parseDateTimeString(data string) string {
 				case "date":
 					str := time.Now().AddDate(values[0], values[1], values[2]).Format("2006-01-02")
 					data = strings.Replace(data, match[0], str, -1)
-					break
 				case "time":
 					str := time.Now().Add((time.Duration(values[0]) * time.Hour) +
 						(time.Duration(values[1]) * time.Minute) +
 						(time.Duration(values[2]) * time.Second)).Format("15:04:05")
 					data = strings.Replace(data, match[0], str, -1)
-					break
 				}
 			}
 		}
