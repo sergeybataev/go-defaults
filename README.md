@@ -90,7 +90,7 @@ type ExamplePointer struct {
 boolZero := false
 stringZero := ""
 intZero := 0
-example := ExamplePointer{
+example := &ExamplePointer{
     Foo: &boolZero,
     Bar: &stringZero,
     Qux: &intZero,
