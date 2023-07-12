@@ -150,80 +150,24 @@ func newDefaultFiller() *Filler {
 	}
 
 	funcs[reflect.Ptr] = func(field *FieldData) {
-
 		k := field.Value.Type().Elem().Kind()
-
-		if k == reflect.Struct {
-			if field.Value.IsZero() {
-				newValue := reflect.New(field.Value.Type().Elem())
-				field.Value.Set(newValue)
-			}
-			fields := getDefaultFiller().GetFieldsFromValue(field.Value.Elem(), nil)
-			getDefaultFiller().SetDefaultValues(fields)
-		}
-
-		if field.TagValue == "" {
+		if k != reflect.Struct && k != reflect.Slice && k != reflect.Ptr && field.TagValue == "" {
 			return
 		}
-
-		switch k {
-		case reflect.Bool:
-			value, _ := strconv.ParseBool(field.TagValue)
-			field.Value.Set(reflect.ValueOf(&value))
-		case reflect.Int:
-			v, _ := strconv.ParseInt(field.TagValue, 10, 64)
-			value := int(v)
-			field.Value.Set(reflect.ValueOf(&value))
-		case reflect.Int8:
-			v, _ := strconv.ParseInt(field.TagValue, 10, 64)
-			value := int8(v)
-			field.Value.Set(reflect.ValueOf(&value))
-		case reflect.Int16:
-			v, _ := strconv.ParseInt(field.TagValue, 10, 64)
-			value := int16(v)
-			field.Value.Set(reflect.ValueOf(&value))
-		case reflect.Int32:
-			v, _ := strconv.ParseInt(field.TagValue, 10, 64)
-			value := int32(v)
-			field.Value.Set(reflect.ValueOf(&value))
-		case reflect.Int64:
-			if field.Field.Type == reflect.TypeOf(time.Second) {
-				value, _ := time.ParseDuration(field.TagValue)
-				field.Value.Set(reflect.ValueOf(&value))
-			} else {
-				value, _ := strconv.ParseInt(field.TagValue, 10, 64)
-				field.Value.Set(reflect.ValueOf(&value))
-			}
-		case reflect.Uint:
-			v, _ := strconv.ParseUint(field.TagValue, 10, 64)
-			value := uint(v)
-			field.Value.Set(reflect.ValueOf(&value))
-		case reflect.Uint8:
-			v, _ := strconv.ParseUint(field.TagValue, 10, 64)
-			value := uint8(v)
-			field.Value.Set(reflect.ValueOf(&value))
-		case reflect.Uint16:
-			v, _ := strconv.ParseUint(field.TagValue, 10, 64)
-			value := uint16(v)
-			field.Value.Set(reflect.ValueOf(&value))
-		case reflect.Uint32:
-			v, _ := strconv.ParseUint(field.TagValue, 10, 64)
-			value := uint32(v)
-			field.Value.Set(reflect.ValueOf(&value))
-		case reflect.Uint64:
-			value, _ := strconv.ParseUint(field.TagValue, 10, 64)
-			field.Value.Set(reflect.ValueOf(&value))
-		case reflect.Float32:
-			v, _ := strconv.ParseFloat(field.TagValue, 64)
-			value := float32(v)
-			field.Value.Set(reflect.ValueOf(&value))
-		case reflect.Float64:
-			value, _ := strconv.ParseFloat(field.TagValue, 64)
-			field.Value.Set(reflect.ValueOf(&value))
-		case reflect.String:
-			tagValue := parseDateTimeString(field.TagValue)
-			field.Value.Set(reflect.ValueOf(&tagValue))
+		if field.Value.IsNil() {
+			v := reflect.New(field.Value.Type().Elem())
+			field.Value.Set(v)
 		}
+		elemField := &FieldData{
+			Value: field.Value.Elem(),
+			Field: reflect.StructField{
+				Type: field.Field.Type.Elem(),
+				Tag:  field.Field.Tag,
+			},
+			TagValue: field.TagValue,
+			Parent:   nil,
+		}
+		funcs[field.Value.Elem().Kind()](elemField)
 	}
 
 	return &Filler{FuncByKind: funcs, FuncByType: types, Tag: "default"}

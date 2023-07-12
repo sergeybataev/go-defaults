@@ -86,7 +86,19 @@ type ExampleBasic struct {
 		Bool    bool `default:"true"`
 		Integer *int `default:"33"`
 	}
-	ChildrenPtr []*ChildPtr
+	PtrStructPtr **struct {
+		Bool    bool `default:"false"`
+		Integer *int `default:"33"`
+	}
+	ChildrenPtr         []*ChildPtr
+	PtrChildrenPtr      *[]*ChildPtr
+	PtrPtrChildrenPtr   **[]*ChildPtr
+	PtrStringSliceNoTag *[]string
+	PtrStringSlice      *[]string   `default:"[1,2,3,4]"`
+	PtrIntSlice         *[]int      `default:"[1,2,3,4]"`
+	PtrIntSliceSlice    *[][]int    `default:"[[1],[2],[3],[4]]"`
+	PtrStringSliceSlice *[][]string `default:"[[1],[]]"`
+	Float64PtrNoTag     *float64
 }
 
 func (s *DefaultsSuite) TestSetDefaultsBasic(c *C) {
@@ -149,7 +161,17 @@ func (s *DefaultsSuite) assertTypes(c *C, foo *ExampleBasic) {
 	c.Assert(*foo.SecondPtr, Equals, time.Second)
 	c.Assert(foo.StructPtr.Bool, Equals, true)
 	c.Assert(*foo.StructPtr.Integer, Equals, 33)
+	c.Assert((*foo.PtrStructPtr).Bool, Equals, false)
+	c.Assert(*(*foo.PtrStructPtr).Integer, Equals, 33)
 	c.Assert(foo.ChildrenPtr, IsNil)
+	c.Assert(*foo.PtrChildrenPtr, IsNil)
+	c.Assert(**foo.PtrPtrChildrenPtr, IsNil)
+	c.Assert(*foo.PtrStringSliceNoTag, IsNil)
+	c.Assert(*foo.PtrStringSlice, DeepEquals, []string{"1", "2", "3", "4"})
+	c.Assert(*foo.PtrIntSlice, DeepEquals, []int{1, 2, 3, 4})
+	c.Assert(*foo.PtrIntSliceSlice, DeepEquals, [][]int{[]int{1}, []int{2}, []int{3}, []int{4}})
+	c.Assert(*foo.PtrStringSliceSlice, DeepEquals, [][]string{[]string{"1"}, []string{}})
+	c.Assert(foo.Float64PtrNoTag, IsNil)
 }
 
 func (s *DefaultsSuite) TestSetDefaultsWithValues(c *C) {

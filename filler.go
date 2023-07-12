@@ -98,7 +98,7 @@ func (f *Filler) isEmpty(field *FieldData) bool {
 		if field.Value.Type().Elem().Kind() == reflect.Struct {
 			return true
 		}
-		return field.Value.IsZero()
+		return field.Value.IsNil()
 	}
 	return true
 }
